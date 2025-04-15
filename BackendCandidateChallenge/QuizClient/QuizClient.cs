@@ -10,6 +10,7 @@ using QuizClient.Tests;
 
 namespace QuizClient;
 
+//TODO: 
 public class QuizClient
 {
     private readonly Uri _quizServiceUri;
@@ -129,6 +130,7 @@ public struct QuizQuestion
     public string Text { get; set; }
 }
 
+//TODO: definitively more exception types need to be handled dspecifically
 public struct Response<T>
 {
     public Response(HttpStatusCode statusCode, T value, string errorMessage = null)

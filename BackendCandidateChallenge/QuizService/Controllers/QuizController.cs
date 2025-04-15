@@ -9,6 +9,13 @@ using QuizClient.Model;
 
 namespace QuizService.Controllers;
 
+//TODO: stop using the connection and start using the data access interface for testability
+//TODO: parametrize queries. lots of unsanitized inputs.  Stored procedures would be even cooler
+//TODO: no exception handling. fun.
+//TODO: make this async
+//TODO: in general I hate having sql queries in the controller. A dedicated data access layer would mean
+//that the controller would only have to deal with the data access layer and not the database directly,
+//it would make it easier to later down the line change the database model without having to touch the controller
 [Route("api/quizzes")]
 public class QuizController : Controller
 {
