@@ -8,6 +8,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using QuizService.Controllers;
 
 namespace QuizService;
 
@@ -26,6 +27,8 @@ public class Startup
         services.AddMvc();
         services.AddSingleton(InitializeDb());
         services.AddControllers();
+        // need to point at the correct injection target. If we had others we could use them here
+        services.AddScoped<IQuizDataAccess, QuizDataAccess>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
