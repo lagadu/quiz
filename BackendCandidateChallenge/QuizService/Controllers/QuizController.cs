@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using QuizService.Model;
 using QuizService.Model.Domain;
 using System.Linq;
+using QuizClient.Model;
 
 namespace QuizService.Controllers;
 
@@ -148,4 +149,39 @@ public class QuizController : Controller
         _connection.ExecuteScalar(sql, new {AnswerId = aid});
         return NoContent();
     }
+
+    //// POST api/quizzes/{id}/responses
+    //[HttpPost("{id}/responses")]
+    //public IActionResult PostQuizResponse(int id, [FromBody] QuizSubmission submission)
+    //{
+    //    if (submission == null)
+    //    {
+    //        return BadRequest("Submission is null.");
+    //    }
+
+    //    var quizModel = quizDataAccess.GetQuizById(id);
+    //    if (quizModel == null)
+    //    {
+    //        return NotFound();
+    //    }
+
+    //    int score = 0;
+    //    if (quizModel.Questions != null)
+    //    {
+    //        // For each question, check answre
+    //        foreach (var question in quizModel.Questions)
+    //        {
+    //            if (submission.Answers != null &&
+    //                submission.Answers.TryGetValue(question.Id, out int submittedAnswerId))
+    //            {
+    //                if (submittedAnswerId == question.CorrectAnswerId)
+    //                {
+    //                    score++;
+    //                }
+    //            }
+    //        }
+    //    }
+
+    //    return Ok(new QuizResult { Score = score });
+    //}
 }

@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using PactNet.Mocks.MockHttpService;
 using PactNet.Mocks.MockHttpService.Models;
+using QuizClient.Model;
 using Xunit;
 
 namespace QuizClient.Tests;
@@ -288,4 +291,63 @@ public class QuizClientTests : IClassFixture<QuizServiceApiPact>
 
         _mockProviderService.VerifyInteractions();
     }
+
+    //[Fact]
+    //public async Task TakingQuiz_WithTwoQuestions_ReturnsCorrectScore()
+    //{
+    //    // create a quiz with minimum two questions as testdata for the test,
+    //    // take the quiz and assert that you have the correct score based on number of correct answers.
+    //    // 1 point per correct answer.
+    //    _mockProviderService
+    //        .Given("A quiz with id '123' exists and has two questions")
+    //        .UponReceiving("A POST request to submit quiz responses with one correct answer")
+    //        .With(new ProviderServiceRequest
+    //        {
+    //            Method = HttpVerb.Post,
+    //            Path = "/api/quizzes/123/responses",
+    //            Headers = new Dictionary<string, object>
+    //            {
+    //                    { "Content-Type", "application/json" }
+    //            },
+
+    //            Body = new
+    //            {
+    //                answers = new Dictionary<string, int>
+    //                {
+    //                        { "1", 10 },
+    //                        { "2", 20 }
+    //                }
+    //            }
+    //        })
+    //        .WillRespondWith(new ProviderServiceResponse
+    //        {
+    //            Status = 200,
+    //            Headers = new Dictionary<string, object>
+    //            {
+    //                    { "Content-Type", "application/json; charset=utf-8" }
+    //            },
+    //            Body = new
+    //            {
+    //                score = 1
+    //            }
+    //        });
+
+    //    var submission = new QuizSubmission
+    //    {
+    //        Answers = new Dictionary<int, int>
+    //            {
+    //                { 1, 10 },   // For question 1, answer 10 is submitted (assume correct)
+    //                { 2, 20 }    // For question 2, answer 20 is submitted (assume incorrect)
+    //            }
+    //    };
+    //    var content = new StringContent(JsonConvert.SerializeObject(submission), Encoding.UTF8, "application/json");
+    //    var response = await Client.PostAsync(new Uri(_mockProviderServiceBaseUri, "/api/quizzes/123/responses"), content);
+
+    //    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    //    var responseBody = await response.Content.ReadAsStringAsync();
+    //    var result = JsonConvert.DeserializeObject<QuizResult>(responseBody);
+    //    Assert.Equal(1, result.Score);
+
+    //    _mockProviderService.VerifyInteractions();
+    //}
 }
