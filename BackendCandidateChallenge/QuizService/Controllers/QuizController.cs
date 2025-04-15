@@ -37,7 +37,9 @@ public class QuizController : Controller
     public object Get(int id)
     {
         const string quizSql = "SELECT * FROM Quiz WHERE Id = @Id;";
-        var quiz = _connection.QuerySingle<Quiz>(quizSql, new {Id = id});
+
+        // had to change this to QuerySingleOrDefault in order for tests to pass, otherwise exception was thrown, related to task 2
+        var quiz = _connection.QuerySingleOrDefault<Quiz>(quizSql, new {Id = id});
         if (quiz == null)
             return NotFound();
         const string questionsSql = "SELECT * FROM Question WHERE QuizId = @QuizId;";
@@ -111,6 +113,16 @@ public class QuizController : Controller
     [Route("{id}/questions")]
     public IActionResult PostQuestion(int id, [FromBody]QuestionCreateModel value)
     {
+        // Validate if the Quiz exists
+        // this was necessary to make tests pass, therefore had to be done in order to complete task 2
+        const string validateQuizSql = "SELECT COUNT(1) FROM Quiz WHERE Id = @Id;";
+        var quizExists = _connection.ExecuteScalar<int>(validateQuizSql, new { Id = id }) > 0;
+
+        if (!quizExists)
+        {
+            return NotFound($"Quiz with Id {id} does not exist.");
+        }
+
         const string sql = "INSERT INTO Question (Text, QuizId) VALUES(@Text, @QuizId); SELECT LAST_INSERT_ROWID();";
         var questionId = _connection.ExecuteScalar(sql, new {Text = value.Text, QuizId = id});
         return Created($"/api/quizzes/{id}/questions/{questionId}", null);
