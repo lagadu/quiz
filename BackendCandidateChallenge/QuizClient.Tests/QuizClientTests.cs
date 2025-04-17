@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +12,8 @@ using Newtonsoft.Json;
 using PactNet.Mocks.MockHttpService;
 using PactNet.Mocks.MockHttpService.Models;
 using QuizClient.Model;
+using QuizService.Controllers;
+using QuizService.Model;
 using Xunit;
 
 namespace QuizClient.Tests;
@@ -292,62 +296,83 @@ public class QuizClientTests : IClassFixture<QuizServiceApiPact>
         _mockProviderService.VerifyInteractions();
     }
 
-    //[Fact]
-    //public async Task TakingQuiz_WithTwoQuestions_ReturnsCorrectScore()
-    //{
-    //    // create a quiz with minimum two questions as testdata for the test,
-    //    // take the quiz and assert that you have the correct score based on number of correct answers.
-    //    // 1 point per correct answer.
-    //    _mockProviderService
-    //        .Given("A quiz with id '123' exists and has two questions")
-    //        .UponReceiving("A POST request to submit quiz responses with one correct answer")
-    //        .With(new ProviderServiceRequest
-    //        {
-    //            Method = HttpVerb.Post,
-    //            Path = "/api/quizzes/123/responses",
-    //            Headers = new Dictionary<string, object>
-    //            {
-    //                    { "Content-Type", "application/json" }
-    //            },
+    private int ParseId(Uri location)
+    {
+        var segments = location.ToString().Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return int.Parse(segments[segments.Length - 1]);
+    }
 
-    //            Body = new
-    //            {
-    //                answers = new Dictionary<string, int>
-    //                {
-    //                        { "1", 10 },
-    //                        { "2", 20 }
-    //                }
-    //            }
-    //        })
-    //        .WillRespondWith(new ProviderServiceResponse
-    //        {
-    //            Status = 200,
-    //            Headers = new Dictionary<string, object>
-    //            {
-    //                    { "Content-Type", "application/json; charset=utf-8" }
-    //            },
-    //            Body = new
-    //            {
-    //                score = 1
-    //            }
-    //        });
+    [Fact]
+    public async Task TakingQuiz_WithTwoQuestions_ReturnsCorrectScore()
+    {
+        var quizClient = new QuizClient(_mockProviderServiceBaseUri, Client);
+        var quizCreate = new QuizCreateModel("Score Quiz");
+        var postQuizResponse = await quizClient.PostQuizAsync(new Quiz { Title = quizCreate.Title }, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postQuizResponse.StatusCode);
+        int quizId = ParseId(postQuizResponse.Value);
 
-    //    var submission = new QuizSubmission
-    //    {
-    //        Answers = new Dictionary<int, int>
-    //            {
-    //                { 1, 10 },   // For question 1, answer 10 is submitted (assume correct)
-    //                { 2, 20 }    // For question 2, answer 20 is submitted (assume incorrect)
-    //            }
-    //    };
-    //    var content = new StringContent(JsonConvert.SerializeObject(submission), Encoding.UTF8, "application/json");
-    //    var response = await Client.PostAsync(new Uri(_mockProviderServiceBaseUri, "/api/quizzes/123/responses"), content);
+        // questrion 1
+        var question1Create = new QuestionCreateModel("question 1");
+        var postQ1Response = await quizClient.PostQuestionAsync(quizId, new QuizQuestion { Text = question1Create.Text }, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postQ1Response.StatusCode);
+        int question1Id = ParseId(postQ1Response.Value);
 
-    //    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    //    var responseBody = await response.Content.ReadAsStringAsync();
-    //    var result = JsonConvert.DeserializeObject<QuizResult>(responseBody);
-    //    Assert.Equal(1, result.Score);
+        var answer1Correct = new Answer() { Id = 1, QuestionId = 1, Text = "a1correct" };
+        var postAnswer1CorrectResponse = await quizClient.PostAnswerAsync(quizId, question1Id, answer1Correct, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postAnswer1CorrectResponse.StatusCode);
+        int answer1CorrectId = ParseId(postAnswer1CorrectResponse.Value);
 
-    //    _mockProviderService.VerifyInteractions();
-    //}
+        var answer1Incorrect = new Answer() { Id = 2, QuestionId = 1, Text = "a1wrong" };
+        var postAnswer1IncorrectResponse = await quizClient.PostAnswerAsync(quizId, question1Id, answer1Incorrect, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postAnswer1IncorrectResponse.StatusCode);
+        int answer1IncorrectId = ParseId(postAnswer1IncorrectResponse.Value);
+
+        var question1Update = new QuestionUpdateModel { Text = question1Create.Text, CorrectAnswerId = answer1CorrectId };
+        var putQ1Response = await quizClient.PutQuestionAsync(quizId, question1Id, new QuizQuestion { Text = question1Update.Text }, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.NoContent, putQ1Response.StatusCode);
+
+        // question 2
+        var question2Create = new QuestionCreateModel("question 2");
+        var postQ2Response = await quizClient.PostQuestionAsync(quizId, new QuizQuestion { Text = question2Create.Text }, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postQ2Response.StatusCode);
+        int question2Id = ParseId(postQ2Response.Value);
+
+        var answer2Incorrect = new Answer() { Id = 3, QuestionId = 2, Text = "a2wrong" };
+        var postAnswer2CorrectResponse = await quizClient.PostAnswerAsync(quizId, question2Id, answer2Incorrect, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postAnswer2CorrectResponse.StatusCode);
+        int answer2CorrectId = ParseId(postAnswer2CorrectResponse.Value);
+
+        var answer2Correct = new Answer() { Id = 4, QuestionId = 2, Text = "a2correct" };
+        var postAnswer2IncorrectResponse = await quizClient.PostAnswerAsync(quizId, question2Id, answer2Correct, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, postAnswer2IncorrectResponse.StatusCode);
+        int answer2IncorrectId = ParseId(postAnswer2IncorrectResponse.Value);
+
+        var question2Update = new QuestionUpdateModel { Text = question2Create.Text, CorrectAnswerId = answer2CorrectId };
+        var putQ2Response = await quizClient.PutQuestionAsync(quizId, question2Id, new QuizQuestion { Text = question2Update.Text }, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.NoContent, putQ2Response.StatusCode);
+
+        // act: we take the quiz, the idea is to get exactly one question right
+        var submission = new QuizSubmission
+        {
+            Answers = new Dictionary<int, int>
+                {
+                    { question1Id, answer1CorrectId },   // Correct answer for Q1.
+                    { question2Id, answer2IncorrectId }    // Incorrect answer for Q2.
+                }
+        };
+        var submissionPayload = new StringContent(JsonConvert.SerializeObject(submission), Encoding.UTF8, "application/json");
+        var submissionRequest = new HttpRequestMessage(HttpMethod.Post, new Uri(_mockProviderServiceBaseUri, $"/api/quizzes/{quizId}/responses"))
+        {
+            Content = submissionPayload
+        };
+        submissionRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        var submissionResponse = await Client.SendAsync(submissionRequest, CancellationToken.None);
+        Assert.Equal(HttpStatusCode.OK, submissionResponse.StatusCode);
+
+        var resultJson = await submissionResponse.Content.ReadAsStringAsync();
+        var quizResult = JsonConvert.DeserializeObject<QuizResult>(resultJson);
+
+        // one question right so score should be 1
+        Assert.Equal(1, quizResult.Score);
+    }
 }
